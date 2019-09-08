@@ -1,37 +1,39 @@
+{-
+    Making a Ternary Operator in Haskell
+    Andrew Ribeiro
+    September 2019
+-}
+
 module TernaryOperator where
+import Data.Char (toUpper)
 
-class TernaryOP a where
-    (?) :: Bool -> a -> a
-    (<|>) :: a -> a -> a
+(?) :: Bool -> a -> Maybe a
+True  ? x = Just x
+False ? _ = Nothing 
+infixl 3 ?
 
-instance TernaryOP (Maybe a) where
-    True  ? (Just fn) = Just fn
-    False ? _       = Nothing 
+(<|>) :: Maybe a -> a -> a
+Nothing <|> x = x 
+Just x  <|> _ = x
+infixl 3 <|>
 
-    Nothing <|> x@(Just fn) = x 
-    x@(Just fn) <|> _ = x
+askQuestion :: String -> [String] -> IO (Maybe String)
+askQuestion str validAnswers = do
+    putStrLn $ "> "++str++"   "++show validAnswers
+    answer <- getLine
+    let upperAns = toUpper <$> answer
+    upperAns `elem` validAnswers ? 
+        return (Just upperAns) <|> return Nothing
+        
+main = do
+    answer <- askQuestion "Was it good service?" ["YES","NO"]
+    case answer of
+        Just a  -> putStrLn $ "< Tip " ++ (a == "YES" ? "0.25%" <|> "0.10%")
+        Nothing -> putStrLn "Error: Invalid input."
 
-(-->) :: Maybe a -> (a->b) -> b
-Just a --> fn = fn a
-    
--- >>> False ? Just 3 <|> Just 4 --> (+10)
--- 14
+-- >>> True ? "first value" <|> "second value"
+-- "first value"
 --
--- >>> if False then 3 else 4 + 10
--- 14
+-- >>> False ? "first value" <|> "second value"
+-- "second value"
 --
-
--- >>> Nothing <|> Just 2  <|>  Nothing  <|> Just 1 
--- Just 2
---
-
-askQuestion :: String -> IO String
-askQuestion str = do
-    putStrLn str
-    getLine
-
-areYouGood = do
-    answer <- askQuestion "Are you good?"
-    (answer == "YES") ? (Just "Good boy!") <|> (Just "Bad boy!") --> putStrLn 
-
--- >>> areYouGood
